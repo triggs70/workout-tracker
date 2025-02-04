@@ -10,7 +10,7 @@ const WorkoutSchema = new mongoose.Schema({
             type: String, //user defined (treadmill, stairmaster,etc)
             duration: Number
         },
-        default: null //cardio is optional field
+        default: {} //cardio is optional field
     }
 });
 

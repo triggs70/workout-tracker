@@ -12,6 +12,8 @@ const app = express();
 //Middleware for app 
 app.use(express.json());
 app.use(cors());
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/workouts", require("./routes/workoutRoutes"));
 
 //MongoDB Atlas connection
 mongoose.connect(process.env.MONGO_URI)
