@@ -6,11 +6,8 @@ const WorkoutSchema = new mongoose.Schema({
     date: {type: Date, default: Date.now}, //Date entered
     exercises: [{type: mongoose.Schema.Types.ObjectId, ref: "Exercise"}], //list of excercise entities (Bench press, chest fly, etc)
     cardio: {
-        type: {
-            type: String, //user defined (treadmill, stairmaster,etc)
-            duration: Number
-        },
-        default: {} //cardio is optional field
+        type: {type: String},
+        duration: Number
     }
 });
 

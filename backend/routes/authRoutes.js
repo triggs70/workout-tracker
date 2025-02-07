@@ -3,10 +3,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {body, validationResult} = require("express-validator");
 const User = require("../models/User");
+const auth = require("../middleware/auth");
 require("dotenv").config();
 
 const router = express.Router();
 
+//User registration
 router.post(
     "/register",
     [
@@ -39,6 +41,7 @@ router.post(
     }
 );
 
+//User login
 router.post(
     "/login",
     [
@@ -69,5 +72,19 @@ router.post(
         }
     }
 );
+
+//Fetch user data (protected route)
+router.get("/user", auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user).select("-password"); //dont include user pass
+        if (!user) {
+            return res.status(404).json({msg: "User not found"});
+        }
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
 
 module.exports = router;
