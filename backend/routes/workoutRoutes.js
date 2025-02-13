@@ -13,7 +13,7 @@ router.get("/", auth, async (req, res) => {
             const date = new Date(req.query.date);
             query.date = {$gte: date, $lt: new Date(date.getTime() + 24 * 60 * 60 * 1000)};
         }
-        const workout = await Workout.find(query).populate("exercises");
+        const workouts = await Workout.find(query).populate("exercises");
         res.json(workouts);
     } catch (err) {
         console.error(err.message);
@@ -25,51 +25,59 @@ router.get("/", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
     try {
         const {title, exercises, cardio} = req.body;
-        const workout = new Workout({ userId: req.user, title, cardio});
+        const workout = new Workout({userId: req.user, title, cardio});
         await workout.save();
         if (exercises && exercises.length > 0) {
-            const excerciseDocs = exercises.map(ex => ({
+            const exerciseDocs = exercises.map(ex => ({
                 userId: req.user,
                 workoutId: workout._id,
                 name: ex.name,
                 sets: ex.sets,
                 reps: ex.reps,
-                weight: ex.weight
+                weight: ex.weight,
             }));
-            const insertedExercises = await Exercise.insertMany(excerciseDocs);
-            workout.exercises = insertedExercises.map(ex => ex._id);
+            const inserted = await Exercise.insertMany(exerciseDocs);
+            workout.exercises = inserted.map(ex => ex._id);
             await workout.save();
         }
-        const popWorkout = await Workout.findById(workout._id).populate("exercises");
-        res.status(201).json(popWorkout);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
-});
-
-//Delete a user workout(protected)
-router.delete("/:id", auth, async (req, res) => {
-    try {
-        const workout = await Workout.findOneAndDelete({_id: req.params.id, userId: req.user});
-        if (!workout) {
-            return res.status(404).json({msg: "No workout data found"});
-        }
-        await Exercise.deleteMany({workoutId: req.params.id});
-        res.json({msg: "Workout deleted successfully"});
+        const populated = await Workout.findById(workout._id).populate("exercises");
+        res.status(201).json(populated);
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
     }
 });
 
-//Update a users workout(protected)
-router.put("/:id", auth, async (req, res) => {
+//Delete a user workout
+router.delete("/date/:date", auth, async (req, res) => {
+    try {
+        const date = new Date(req.params.date);
+        const workout = await Workout.findOneAndDelete({
+            userId: req.user,
+            date: {$gte: date, $lt: new Date(date.getTime() + 24 * 60 * 60 * 1000)},
+        });
+        if (!workout) {
+            return res.status(404).json({msg: "Workout not found"});
+        }
+        await Exercise.deleteMany({workoutId: workout._id});
+        res.json({msg: "Workout deleted"});
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+//Update a users workout
+router.put("/date/:date", auth, async (req, res) => {
     try {
         const {title, cardio, exercises} = req.body;
-        let workout = await Workout.findOne({_id: req.params.id, userId: req.user});
+        const date = new Date(req.params.date);
+        let workout = await Workout.findOne({
+            userId: req.user,
+            date: {$gte: date, $lt: new Date(date.getTime() + 24 * 60 * 60 * 1000)},
+        });
         if (!workout) {
-            return res.status(404).json({msg: "No workout data found"});
+            return res.status(404).json({msg: "Workout doesnt exist"});
         }
         if (title) {
             workout.title = title;
@@ -77,16 +85,19 @@ router.put("/:id", auth, async (req, res) => {
         if (cardio) {
             workout.cardio = cardio;
         }
-        if (exercises && exercises.length > 0) {
+        if (exercises) {
+            workout.exercises = workout.exercises.filter(id => 
+                exercises.some(ex => ex._id && ex._id.toString() === id.toString())
+            );
             for (let ex of exercises) {
                 if (ex._id) {
                     await Exercise.findByIdAndUpdate(ex._id, {
                         sets: ex.sets,
                         reps: ex.reps,
-                        weight: ex.weight,
+                        weight: ex.weight
                     });
                 } else {
-                    const newExercise = new Exercise({
+                    const added = new Exercise({
                         userId: req.user,
                         workoutId: workout._id,
                         name: ex.name,
@@ -94,35 +105,39 @@ router.put("/:id", auth, async (req, res) => {
                         reps: ex.reps,
                         weight: ex.weight,
                     });
-                    await newExercise.save();
-                    workout.exercises.push(newExercise._id);
+                    await added.save();
+                    workout.exercises.push(added._id);
                 }
-            }
+            }    
         }
         await workout.save();
-        res.json(workout);
+        const updated = await Workout.findById(workout._id).populate("exercises");
+        res.json(updated);
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
     }
 });
 
-//Delete a specific exercise from a workout(protected)
-router.put("/:workoutId/exercises/:exerciseId", auth, async (req, res) => {
+//Fetch a specific exercise history for a user(progress tracking)
+router.get("/progress/:exerciseName", auth, async (req,res) => {
     try {
-        const {workoutId, exerciseId} = req.params;
-        let workout = await Workout.findOne({_id: workoutId, userId: req.user});
-        if (!workout) {
-            return res.status(404).json({msg: "Workout not found"});
-        }
-        workout.exercises = workout.exercises.filter(id => id.toString() !== exerciseId);
-        await workout.save();
-        await Exercise.findOneAndDelete({_id: exerciseId, workoutId});
-        res.json({msg: "Exercise removed from the workout"});
+        const {exerciseName} = req.params;
+        const workouts = await Workout.find({userId: req.user}).populate({
+            path: "exercises",
+            match: {name: exerciseName},
+        });
+        const progress = workouts
+            .map(workout => ({
+                date: workout.date,
+                exercises: workout.exercises.filter(ex => ex !== null),
+            }))
+            .filter(workout => workout.exercises.length > 0);
+        res.json(progress);
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
     }
-})
+});
 
 module.exports = router;
