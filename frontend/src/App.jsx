@@ -7,6 +7,7 @@ import AddWorkout from "./pages/AddWorkout"
 import Nutrition from "./pages/Nutrition"
 import Progress from "./pages/Progress"
 import Navbar from "./components/Navbar"
+import Protected from "./components/ProtectedRoute"
 
 function App() {
   return (
@@ -16,10 +17,10 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/add-workout" element={<AddWorkout />} />
-        <Route path="/nutrition" element={<Nutrition />} />
-        <Route path="/progress" element={<Progress />} />
+        <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+        <Route path="/add-workout" element={<Protected><AddWorkout /></Protected>} />
+        <Route path="/nutrition" element={<Protected><Nutrition /></Protected>} />
+        <Route path="/progress" element={<Protected><Progress /></Protected>} />
       </Routes>
     </div>
   );
