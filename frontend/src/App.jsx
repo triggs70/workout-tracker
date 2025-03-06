@@ -8,6 +8,7 @@ import Nutrition from "./pages/Nutrition"
 import Progress from "./pages/Progress"
 import Navbar from "./components/Navbar"
 import Protected from "./components/ProtectedRoute"
+import EditWorkout from "./pages/EditWorkout"
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/add-workout" element={<Protected><AddWorkout /></Protected>} />
         <Route path="/nutrition" element={<Protected><Nutrition /></Protected>} />
         <Route path="/progress" element={<Protected><Progress /></Protected>} />
+        <Route path="/edit-workout" element={<Protected><EditWorkout /></Protected>} />
       </Routes>
     </div>
   );

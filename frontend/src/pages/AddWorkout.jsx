@@ -30,37 +30,31 @@ function AddWorkout() {
     };
 
     return (
-        <div className="container mt-4">
-            <h2>Log Workout</h2>
-            {error && <p className="text-danger">{error}</p>}
-            <form onSubmit={submit}>
-                <div className="mb-3">
-                    <label className="form-label">Workout Title</label>
-                    <input type="text" name="title" className="form-control" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
-                </div>
-                {formData.exercises.map((exercise, index) => (
-                    <div key={index} className="border p-3 mb-2">
-                        <label className="form-label">Exercise Name</label>
-                        <input type="text" name="name" className="form-control" value={exercise.name} onChange={(e) => change(e, index)} required />
-                        <label className="form-label">Sets</label>
-                        <input type="number" name="sets" className="form-control" value={exercise.sets} onChange={(e) => change(e, index)} required />
-                        <label className="form-label">Reps</label>
-                        <input type="number" name="reps" className="form-control" value={exercise.reps} onChange={(e) => change(e, index)} required />
-                        <label className="form-label">Weight</label>
-                        <input type="number" name="weight" className="form-control" value={exercise.weight} onChange={(e) => change(e, index)} required />
+        <div className="container d-flex justify-content-center align-items-center" style={{height: "80vh"}}>
+            <div className="card p-4 shadow-lg" style={{width: "450px"}}>
+                <h2 className="text-center mb-4">Log Workout</h2>
+                {error && <p className="text-danger text-center">{error}</p>}
+                <form onSubmit={submit}>
+                    <div className="mb-3">
+                        <label className="form-label">Workout Title</label>
+                        <input type="text" name="title" className="form-control" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
                     </div>
-                ))}
-                <button type="button" className="btn btn-secondary" onClick={addExer}>Add Another Exercise</button>
-
-                <div className="mt-4">
-                    <h5>Cardio (Optional)</h5>
-                    <label className="form-label">Type</label>
-                    <input type="text" name="type" className="form-control" value={formData.cardio.type} onChange={cardioChange} />
-                    <label className="form-label">Duration</label>
-                    <input type="number" name="duration" className="form-control" value={formData.cardio.duration} onChange={cardioChange} />
-                </div>
-                <button type="submit" className="btn btn-primary mt-3">Log Workout</button>
-            </form>
+                    <h5 className="text-center">Exercises</h5>
+                    {formData.exercises.map((exercise, index) => (
+                        <div key={index} className="mb-3">
+                            <input type="text" name="name" className="form-control mb-2" placeholder="Exercise Name" value={exercise.name} onChange={(e) => change(e, index)} required />
+                            <input type="number" name="sets" className="form-control mb-2" placeholder="Sets" value={exercise.sets} onChange={(e) => change(e, index)} required />
+                            <input type="number" name="reps" className="form-control mb-2" placeholder="Reps" value={exercise.reps} onChange={(e) => change(e, index)} required />
+                            <input type="number" name="weight" className="form-control mb-2" placeholder="Weight (lbs)" value={exercise.weight} onChange={(e) => change(e, index)} required />
+                        </div>
+                    ))}
+                    <button type="button" className="btn btn-secondary w-100 mb-3" onClick={addExer}>Add Exercise</button>
+                    <h5 className="text-center">Cardio (Optional)</h5>
+                    <input type="text" name="type" className="form-control mb-2" placeholder="Cardio Type" value={formData.cardio.type} onChange={cardioChange}/>
+                    <input type="number" name="duration" className="form-control mb-3" placeholder="Duration (mins)" value={formData.cardio.duration} onChange={cardioChange}/>
+                    <button type="submit" className="btn btn-primary w-100">Log Workout</button>
+                </form>
+            </div>
         </div>
     );
 }
